@@ -1,0 +1,15 @@
+{
+  "esp32_device_1": {
+    "dataLoggingInterval": "200000",
+    "dataUploadInterval": "2000"
+  },
+  "esp32_device_2": {
+    "dataLoggingInterval": "2000",
+    "dataUploadInterval": "2000"
+  },
+  "arduino_device_1": {
+    "dataLoggingInterval": "500",
+    "dataUploadInterval": "2000",
+    "dataAutoMessageInterval": "1000"
+  }
+}
