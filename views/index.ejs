@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Data Logger Test Server</title>
+  <!-- Include Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light justify-content-between">
+    <a class="navbar-brand">Data Logger Manager</a>
+    <div class="dropdown">
+      <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <%= username %>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
+          <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-2 1H4c-1 0-2 0-2-1s1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-1.221-1.573C10.68 10.68 9.34 10 8 10s-2.68.68-3.778 1.422C2.154 11.01 2.001 11.75 2 12c1 0 1 0 2 0h8c1 0 1 0 2 0z"/>
+      </svg>
+      </button>
+
+      <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        <a class="dropdown-item" id="logout" href="#">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      
+      <!-- Settings Container -->
+   <div class="col-lg-3 p-3 border-end">
+    <h2>Loggers</h2>
+
+    <form action="/" method="post">
+        <div class="form-group">
+            <label for="deviceId">Select Device:</label>
+            <select class="form-control" name="deviceId" id="deviceId" onchange="updateSettings()">
+                <% deviceIds.forEach(function(deviceId) { %>
+                    <option value="<%= deviceId %>" <% if(deviceId === selectedDeviceId) { %>selected<% } %>><%= deviceId %></option>
+                <% }) %>
+            </select>
+
+        </div>
+
+      <h3>Settings - <span id="current-device"><%= selectedDeviceId %></span></h3>
+      <table id="device-settings-table">
+          <!-- The device settings will be populated here dynamically using JavaScript -->
+      </table>
+        
+        <button type="submit" class="btn btn-primary" id="applyChangesBtn" disabled>Apply Changes</button> 
+    </form>
+    <!-- ... (rest of your code) -->
+    </div>
+      <!-- Log Data Container -->
+      <div class="col-lg-7 p-3 border-end">
+        <h2>Log Data</h2>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="table-tab" data-toggle="tab" href="#table" role="tab" aria-controls="table" aria-selected="true">Table View</a>
+          </li>
+          <li class="nav-item" role="presentation">
+            <a class="nav-link" id="plot-tab" data-toggle="tab" href="#plot" role="tab" aria-controls="plot" aria-selected="false">Plot View</a>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+          <div class="tab-pane fade show active" id="table" role="tabpanel" aria-labelledby="table-tab">
+            <!-- Table Data -->
+            <div id="logs">
+              <!-- logs will be displayed here -->
+            </div>
+          </div>
+          <div class="tab-pane fade" id="plot" role="tabpanel" aria-labelledby="plot-tab">
+            <!-- Plot Data (You can expand this later) -->
+            <p>Plot data will be displayed here.</p>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Refresh Button Container -->
+      <div class="col-lg-2 p-3">
+        <h2>Toolbar</h2>        
+        <button onclick="startNewSession()" class="btn btn-success">Begin Logging Session</button>
+        <button onclick="displayLatestLogs()" class="btn btn-info">Refresh Logs</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <script src="/script.js"></script>
+  <script src="/settings-script.js"></script>
+
+  <script>
+      function loadDeviceSettings(deviceId) {
+  console.log("Attempting to load device settings for deviceId:", deviceId); // debug
+  
+  fetch(`/api/settings?deviceId=${deviceId}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(settings => {
+      console.log("Received settings:", settings);  
+      const table = document.getElementById('device-settings-table');
+      table.innerHTML = '';  // Clear the table
+
+      for (let displayName in settings) {
+        const row = document.createElement('tr');
+
+        const nameCell = document.createElement('td');
+        nameCell.textContent = displayName;  
+        row.appendChild(nameCell);
+
+        const currentValueCell = document.createElement('td');
+        currentValueCell.innerHTML = `<span id="current-${displayName.replace(' ', '').toLowerCase()}">${settings[displayName]}</span> ms`;
+        row.appendChild(currentValueCell);
+
+        const newValueCell = document.createElement('td');
+        newValueCell.innerHTML = `<input type="number" class="form-control" id="new${displayName.replace(' ', '').charAt(0).toUpperCase() + displayName.replace(' ', '').slice(1)}" name="${displayName}" value="${settings[displayName]}">`;
+        row.appendChild(newValueCell);
+        
+        // Event listener for enabling the "Apply Changes" button
+        newValueCell.children[0].addEventListener('input', function() {
+          document.getElementById('applyChangesBtn').disabled = false;
+        });
+
+        table.appendChild(row);
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching device settings:', error);
+    });
+}
+
+
+
+    // Load settings for the initially selected device
+    loadDeviceSettings('<%= selectedDeviceId %>');
+</script>
+
+</body>
+</html>
